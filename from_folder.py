@@ -24,7 +24,8 @@ def states_from_folder():
         showmelog=[]
         gainpath=os.path.join('Statements','Gain')
         dormanpath=os.path.join('Statements','Dorman')
-        list_path=(gainpath, dormanpath)
+        admispath=os.path.join('Statements','Admis')
+        list_path=(gainpath, dormanpath, admispath)
         #for onepath in list_path:
         for root, dirs, files in os.walk(source_path):
             for pdffile in files:
@@ -49,7 +50,8 @@ def states_from_folder():
                         interpreter.process_page(page)
                         data =  retstr.getvalue()
                         
-                    brokers=['DORMAN TRADING','GAIN CAPITAL']
+                    brokers=['DORMAN TRADING','GAIN CAPITAL',
+                             'Daily Customer Account Status']#the last one is for admis
                     for broker in brokers:
                         match=re.search(broker, data)
                         if match:
@@ -82,6 +84,24 @@ def states_from_folder():
                                 else:
                                     showmelog.append(pdf_name)
                                     shutil.copy(filepath, gain_f_path)
+                            elif broker == 'Daily Customer Account Status':
+                                get_date = re.findall('Business Date = (.+[0-9])', data)
+                                date_object = datetime.strptime(get_date[0], '%Y-%m-%d')
+                                print date_object
+                                date_for_pdf_name = date_object.strftime('%Y-%m-%d')
+                                11111
+                                get_acc = re.findall('Report For - (.+[0-9])', data)
+                                acc = get_acc[0]
+                                pdf_name = date_for_pdf_name+'-'+acc+'.pdf'
+                                print pdf_name
+                                admis_f_path=os.path.join('Statements','Admis',pdf_name)
+                                if not os.path.exists(admispath):
+                                    os.makedirs(admispath)
+                                if os.path.exists(admis_f_path):
+                                    continue
+                                else:
+                                    showmelog.append(pdf_name)
+                                    shutil.copy(filepath, admis_f_path)
                             break
             if get_from_subfolder_item==True:
                 pass
@@ -100,6 +120,7 @@ def states_from_folder():
             msgBox.setText('Following statements were copied:\n'+showlog)
             msgBox.exec_()
     except:
+        #print 'olala'
         err_shelve = QMessageBox.warning(None, ("ESPA"),
                                          ("You didn't select the folder to copy from."))
 
