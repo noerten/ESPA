@@ -28,7 +28,7 @@ from requests import *
 from from_folder import states_from_folder
 from dnld_attach import download_attach_gain
 from pdfparser import import_stats
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
 class Myplot(QtGui.QTabWidget):
     def __init__(self, parent=None):
@@ -39,11 +39,14 @@ class Myplot(QtGui.QTabWidget):
         self.tab3 = QtGui.QTabWidget()
         self.tab3_1 = QtGui.QWidget()
         self.tab3_2 = QtGui.QWidget()
+        self.tab3_3 = QtGui.QWidget()
+        
         self.addTab(self.tab1,"Charts")
         self.addTab(self.tab2,"Analysis")
         self.addTab(self.tab3,"Database")
         self.tab3.addTab(self.tab3_1,"Dorman")
         self.tab3.addTab(self.tab3_2,"Gain")
+        self.tab3.addTab(self.tab3_3,"Phillip")
         self.setCurrentIndex(2)
         self.figure = plt.figure(frameon=True, tight_layout=False)
         self.list_w_series()
@@ -65,7 +68,10 @@ class Myplot(QtGui.QTabWidget):
             self.add_table_gain()
         except:
             pass
-        
+        try:
+            self.add_table_phillip()
+        except:
+            pass
  #   def test_print(self):
  #       print self.dwmqy_btngroup.checkedId()
     def list_w_series(self):
@@ -163,6 +169,27 @@ class Myplot(QtGui.QTabWidget):
      #   tab3_2_layout.addWidget(tab3_2_refr_btn)
         tab3_2_layout.addWidget(tab3_2_view)
         self.tab3_2.setLayout(tab3_2_layout)##########################
+
+    def add_table_phillip(self):
+        tab3_3_view = QtGui.QTableView()
+       # tab3_2_refr_btn = QtGui.QPushButton('Refresh')
+        db = QtSql.QSqlDatabase.addDatabase("QSQLITE")
+        db.setDatabaseName("stat.sqlite3")
+        db.open()
+        tab3_3_model = QtSql.QSqlTableModel()
+        tab3_3_model.setTable('acc_stats_phillip') 
+        tab3_3_model.select()
+        tab3_3_view.setModel(tab3_3_model)
+        tab3_3_view.setAlternatingRowColors(True)
+        tab3_3_view.resizeColumnsToContents()
+        tab3_3_view.resizeRowsToContents()
+        tab3_3_view.setSortingEnabled(True)
+        tab3_3_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+
+        tab3_3_layout=QtGui.QVBoxLayout()
+     #   tab3_2_layout.addWidget(tab3_2_refr_btn)
+        tab3_3_layout.addWidget(tab3_3_view)
+        self.tab3_3.setLayout(tab3_3_layout)##########################
 
         #if i write db.close() there is nosorting
       #  db.close()
@@ -458,10 +485,12 @@ class MySettings(QtGui.QDialog):
         self.download_fcm = QtGui.QLabel("Download statements for:")
         self.download_d = QtGui.QCheckBox('Dorman Trading', self)
         self.download_g = QtGui.QCheckBox('Gain Capital', self)
+        self.download_p = QtGui.QCheckBox('PhillipCapital', self)
         
         self.show_fcm = QtGui.QLabel("Show charts for:")
         self.show_d = QtGui.QCheckBox('Dorman Trading', self)
-        self.show_g = QtGui.QCheckBox('Gain Capital', self)
+        self.show_g = QtGui.QCheckBox('Gain Capital', self)        
+        self.show_p = QtGui.QCheckBox('PhillipCapital', self)
 ###################################3
         self.select_f_label = QtGui.QLabel("Select a folder to copy\nstatements from:")
         self.select_f_text = QtGui.QLineEdit()
@@ -473,17 +502,22 @@ class MySettings(QtGui.QDialog):
         self.reminder = QtGui.QLabel('''Click on another tab to apply changes''')
 ###########################
 
-        gridLayout = QtGui.QGridLayout()
-        gridLayout.addLayout(self.save_layout, 0, 0)
-        gridLayout.addLayout(self.mail_layout, 0, 1)
-        gridLayout.addLayout(self.pwd_layout, 0, 2)
+        self.mail_password_layout = QtGui.QHBoxLayout()
+        self.mail_password_layout.addLayout(self.save_layout)
+        self.mail_password_layout.addLayout(self.mail_layout)
+        self.mail_password_layout.addLayout(self.pwd_layout)
         
-        gridLayout.addWidget(self.download_fcm, 1, 0)
-        gridLayout.addWidget(self.download_d, 1, 1)
-        gridLayout.addWidget(self.download_g, 1, 2)
-        gridLayout.addWidget(self.show_fcm, 2, 0)
-        gridLayout.addWidget(self.show_d, 2, 1)
-        gridLayout.addWidget(self.show_g, 2, 2)
+        gridLayout = QtGui.QGridLayout()
+        
+        gridLayout.addWidget(self.download_fcm, 0, 0)
+        gridLayout.addWidget(self.download_d, 0, 1)
+        gridLayout.addWidget(self.download_g, 0, 2)
+        gridLayout.addWidget(self.download_p, 0, 3)
+        
+        gridLayout.addWidget(self.show_fcm, 1, 0)
+        gridLayout.addWidget(self.show_d, 1, 1)
+        gridLayout.addWidget(self.show_g, 1, 2)
+        gridLayout.addWidget(self.show_p, 1, 3)
 
         folder_layout = QtGui.QHBoxLayout()
         folder_layout.addWidget(self.select_f_label)
@@ -499,6 +533,7 @@ class MySettings(QtGui.QDialog):
 
         total_layout=QtGui.QVBoxLayout()
         total_layout.addLayout(folder_layout)
+        total_layout.addLayout(self.mail_password_layout)
         total_layout.addLayout(gridLayout)
         total_layout.addWidget(self.reminder)
         total_layout.addLayout(btn_layout)
@@ -508,11 +543,14 @@ class MySettings(QtGui.QDialog):
         self.check_group = QtGui.QButtonGroup()
         self.check_group.addButton(self.download_d,0)
         self.check_group.addButton(self.download_g,1)
-        self.check_group.addButton(self.show_d,2)
-        self.check_group.addButton(self.show_g,3)
+        self.check_group.addButton(self.download_p,2)
+        self.check_group.addButton(self.show_d,3)
+        self.check_group.addButton(self.show_g,4)
+        self.check_group.addButton(self.show_p,5)
         self.check_group.setExclusive(False)
 
-#check_list=dict.fromkeys(['download_d','download_g','show_d','show_g'])
+#check_list=dict.fromkeys(['download_d','download_g','download_p',
+        #'show_d','show_g','show_p'])
         try:
             s=shelve.open('config.db', flag="r")
             print 'opened'
@@ -521,6 +559,8 @@ class MySettings(QtGui.QDialog):
                 if self.check_dict[0]==True:
                     print '0'
                     self.download_d.setCheckState(Qt.Checked)
+                else:
+                    self.download_d.setCheckState(Qt.Unchecked)                    
                 if self.check_dict[1]==True:
                     print '1'
                     self.download_g.setCheckState(Qt.Checked)
@@ -528,17 +568,29 @@ class MySettings(QtGui.QDialog):
                     self.download_g.setCheckState(Qt.Unchecked)
                 if self.check_dict[2]==True:
                     print '2'
+                    self.download_p.setCheckState(Qt.Checked)
+                else:
+                    self.download_p.setCheckState(Qt.Unchecked)
+                    
+                if self.check_dict[3]==True:
+                    print '3'
                     self.show_d.setCheckState(Qt.Checked)
                 else:
                     self.show_d.setCheckState(Qt.Unchecked)
-                if self.check_dict[3]==True:
-                    print '3'
+                if self.check_dict[4]==True:
+                    print '4'
                     self.show_g.setCheckState(Qt.Checked)
                 else:
                     self.show_g.setCheckState(Qt.Unchecked)
+                if self.check_dict[5]==True:
+                    print '5'
+                    self.show_p.setCheckState(Qt.Checked)
+                else:
+                    self.show_p.setCheckState(Qt.Unchecked)
+                    
             except:
                 print 'no dict'
-                self.check_dict=dict.fromkeys([0,1,2,3], False)
+                self.check_dict=dict.fromkeys([0,1,2,3,4,5], False)
             try:
                 
                 self.mail_dict=s['mails']
@@ -564,7 +616,7 @@ class MySettings(QtGui.QDialog):
             s.close()
         except:
             print 'nothing'
-            self.check_dict=dict.fromkeys([0,1,2,3], False)
+            self.check_dict=dict.fromkeys([0,1,2,3,4,5], False)
             self.mail_dict=dict.fromkeys(['mail1'])
             self.get_from_subfolder_dict={'get_from_subfolder', True}
 
@@ -572,7 +624,7 @@ class MySettings(QtGui.QDialog):
         self.check_group.buttonClicked[QtGui.QAbstractButton].connect(self.settings_dict)
 
     def settings_dict(self, button):
-        #check_list=dict.fromkeys(['download_d','download_g','show_d','show_g'])
+#check_list=dict.fromkeys(['download_d','download_g','download_p','show_d','show_g','show_p'])
         self.check_dict[self.check_group.id((button))]=button.isChecked()
 
     def save_login_pwd(self):

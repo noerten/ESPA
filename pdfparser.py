@@ -9,12 +9,13 @@ def import_stats():
     import urllib2
     import re
     import os
+    import sys
     import logging
     from StringIO import StringIO
     import sqlite3
     from PyQt4 import QtGui
     from PyQt4.QtGui import QMessageBox
-    __version__ = "0.5.0"
+    __version__ = "0.6.0"
     #with by row imprt
     showlog=list() #what we show to user
     column_count=0
@@ -26,6 +27,9 @@ def import_stats():
     dorman_pdf_mistake=[]
     gain_pdf=[]
     gain_pdf_mistake=[]
+    phillip_pdf=[]
+    phillip_pdf_mistake=[]
+    
     if not os.path.exists('logs'):
         os.makedirs('logs')
     log_file = os.path.join('logs','logging.txt')
@@ -34,15 +38,24 @@ def import_stats():
 
     gainpath=os.path.join('Statements','Gain')
     dormanpath=os.path.join('Statements','Dorman')
+    phillippath=os.path.join('Statements','Phillip')
+    
     if not os.path.exists(dormanpath):
         os.makedirs(dormanpath)
     if not os.path.exists(gainpath):
         os.makedirs(gainpath)
-    list_path=(gainpath, dormanpath)
+    if not os.path.exists(phillippath):
+        os.makedirs(phillippath)
+        
+    list_path=(gainpath, dormanpath, phillippath)
     for onepath in list_path:
         
         datalist=list()
-    #    if onepath==gainpath: continue
+        ##########################
+        #dev
+        if onepath==gainpath: continue
+        if onepath==dormanpath: continue
+        ##########################
         try:
             conn= sqlite3.connect('stat.sqlite3')
             cur=conn.cursor()
@@ -50,6 +63,8 @@ def import_stats():
                 cur.execute('SELECT Date FROM acc_stats_gain')
             elif onepath==dormanpath:
                 cur.execute('SELECT Date FROM acc_stats_dorman')
+            elif onepath==phillippath:
+                cur.execute('SELECT Date FROM acc_stats_phillip')
             for row in cur:
                 row=str(row[0])
                 datalist.append(row)
@@ -61,7 +76,7 @@ def import_stats():
                 pass
             pass
      #   count_big=0
-        conn= sqlite3.connect('stat.sqlite3', detect_types=sqlite3.PARSE_DECLTYPES)
+        conn = sqlite3.connect('stat.sqlite3', detect_types=sqlite3.PARSE_DECLTYPES)
         cur=conn.cursor()
         cur.execute('CREATE TABLE IF NOT EXISTS acc_stats_gain\
                     (Date DATE, Payments_Receipts REAL,\
@@ -81,13 +96,27 @@ def import_stats():
                     Margin_Default_Excess REAL,\
                     Total_Fees REAL, Total_Broker_Comm REAL,\
                     Cash_in_out TEXT)')
-        cur.execute('CREATE TABLE IF NOT EXISTS acc_stats_dorman (Date DATE, Beginning_Balance REAL,\
-                    Commission REAL, Clearing_Fees REAL, Exchange_Fees REAL,\
-                    NFA_Fees REAL, Total_Fees REAL, Net_Profit_Loss_From_Trades REAL, Cash_Amounts REAL,\
+        
+        cur.execute('CREATE TABLE IF NOT EXISTS acc_stats_dorman (Date DATE,\
+                    Beginning_Balance REAL, Commission REAL, Clearing_Fees REAL,\
+                    Exchange_Fees REAL,NFA_Fees REAL, Total_Fees REAL,\
+                    Net_Profit_Loss_From_Trades REAL, Cash_Amounts REAL,\
                     Ending_Balance REAL, Open_Trade_Equity REAL, Total_Equity REAL,\
                     Net_Market_Value_Of_Options REAL, Account_Value_At_Market REAL,\
                     Initial_Margin_Requirment REAL, Maintenance_Margin_Requirement REAL,\
                     Excess_Equity REAL, Commissions_and_Fees REAL, Cash_in_out TEXT)')
+        
+        cur.execute('CREATE TABLE IF NOT EXISTS acc_stats_phillip (Date DATE,\
+                    Beginning_Balance REAL, Adjustments REAL, Commission REAL,\
+                    Clearing_Fee REAL, Globex_Fee REAL, NFA_Fee REAL, Platform REAL,\
+                    Transaction_Fee REAL, US4_Swap_Val REAL, Realised_PL REAL,\
+                    Option_Premium REAL, Ending_Balance REAL, Forward Value REAL,\
+                    Open_Trade_Equity REAL, Open US4_Swap_Val REAL, Equity_Balance REAL,\
+                    Long_Option_Value REAL, Short_Option_Value REAL,\
+                    Net_Option_Value REAL, Net_Liquid_Value REAL, Collateral REAL,\
+                    Equity_Collateral REAL, Initial_Margin REAL, Maint_Margin REAL,\
+                    Margin_Ex_Def REAL, Commissions_and_Fees REAL, Cash_in_out TEXT)')
+        
 
         for f in os.listdir(onepath):
             if f.endswith(".pdf") or f.endswith(".PDF"):
@@ -147,6 +176,19 @@ def import_stats():
                                'ACCOUNT VALUE AT MARKET',
                                'INITIAL MARGIN REQUIREMENT',
                                'MAINTENANCE MARGIN REQUIREMENT','EXCESS EQUITY')
+                elif onepath == phillippath:
+                    data_rows=('Beginning Balance', 'Adjustments',
+                               'Commission', 'Clearing Fee','Globex Fee',
+                               'NFA Fee', 'Platform', 'Transaction Fee',
+                               'US4/Swap Val', 'Realised P/L', 'Option Premium',
+                               'Ending Balance', 'Forward Value',
+                               'Open Trade Equity', 'Open US4/Swap Val',
+                               'Equity Balance', 'Long Option Value',
+                               'Short Option Value', 'Net Option Value',
+                               'Net Liquid. Value', 'Collateral',
+                               'Equity Collateral', 'Initial Margin',
+                               'Maint. Margin', 'Margin Ex/Def')
+                           
                 commiss=('COMMISSION', 'CLEARING FEES', 'EXCHANGE FEES',
                          'NFA FEES')
                 margin_list=['INITIAL MARGIN','MAINTENANCE MARGIN',
@@ -162,7 +204,15 @@ def import_stats():
                         matches = re.findall(reg, data)
                         if not matches:
                             matches = ['0.00']
-                    strmatches=''.join(matches)
+                    elif onepath==phillippath:
+                        reg=item+'.+'
+                        matches = re.findall(reg, data)
+                        if item == 'US4/Swap Val':
+                            matches = [matches[-1]]
+                        if item == 'Collateral':
+                            matches = [matches[0]]
+
+                    strmatches=''.join(matches)               
                     if onepath==gainpath:
                         strmatches=strmatches.replace(' ','')
                         numb = re.findall('.+?([0-9.]+).R$', strmatches)
@@ -180,6 +230,7 @@ def import_stats():
                         except:
                             continue
                     if onepath==dormanpath:
+                        strmatches=''.join(matches)
                         strmatches=strmatches.split(' ')
                         strmatches = filter(bool, strmatches)
                         omgomg='.*?([0-9]*)[\,]{0,1}([0-9.]+)'
@@ -199,6 +250,21 @@ def import_stats():
                             print 'didnt manage to get a number'
                             logging.error('didnt manage to get a numb from dorman %s' % fdate, exc_info=True)
                             continue
+                        
+                    if onepath==phillippath:
+                        strmatches=''.join(matches)
+                        strmatches=strmatches.split(' ')
+                        strmatches = filter(bool, strmatches)
+                        omgomg='.*?(-*[0-9]*)[\,]{0,1}([0-9.]+)'
+                        numb = re.findall(omgomg, strmatches[-1])
+                        try:
+                            wwwww=''.join(numb[0])
+                            item_numb=float(wwwww)
+                            one_row.append(item_numb)
+                        except:
+                            print 'didnt manage to get a number'
+                            logging.error('didnt manage to get a numb from dorman %s' % fdate, exc_info=True)
+                            continue
                 if onepath==dormanpath:
                     if 'WIRE TRANSFER RECEIVED' in data:
                         one_row.append('deposit')
@@ -213,6 +279,12 @@ def import_stats():
                         one_row.append('cashout')
                     else:
                         one_row.append('nothing')
+                if onepath == phillippath:
+                    #
+                    ##
+                    ###
+                    #add transfers for phillip
+                    one_row.append('nothing')
                 print one_row    
                 print '\n'
 #                print 'column count', column_count
@@ -220,9 +292,10 @@ def import_stats():
 #                if column_count>2:
 #                    print 'olola'
 #                    break
+
                 if onepath==gainpath:
                     try:
-                        
+
                         cur.execute('INSERT INTO acc_stats_gain (Date, Payments_Receipts,\
                                     Account_Cash_Balance, Realized_Profit_Loss, Premiums,\
                                     Commissions_and_Fees, Clearing, NFA, Fees, Commission,\
@@ -262,10 +335,37 @@ def import_stats():
                         print 'didnt add dorman (mistake)', f
                         dorman_pdf_mistake.append(f)
                         logging.error('didnt add dorman (mistake)', exc_info=True)
+#####################################
+                elif onepath==phillippath:
+                    try:
+                        cur.execute('INSERT INTO acc_stats_phillip (Date) VALUE (?)', one_row[0])
+                        print '000'
+                        cur.execute('INSERT INTO acc_stats_phillip (Date,\
+                                    Beginning_Balance, Adjustments, Commission,\
+                                    Clearing_Fee, Globex_Fee, NFA_Fee, Platform,\
+                                    Transaction_Fee, US4_Swap_Val, Realised_PL,\
+                                    Option_Premium, Ending_Balance, Forward Value,\
+                                    Open_Trade_Equity, Open US4_Swap_Val, Equity_Balance,\
+                                    Long_Option_Value, Short_Option_Value,\
+                                    Net_Option_Value, Net_Liquid_Value, Collateral,\
+                                    Equity_Collateral, Initial_Margin, Maint_Margin,\
+                                    Margin_Ex_Def, Cash_in_out) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', one_row)
+                        print '1111'
+                        cur.execute('UPDATE acc_stats_phillip SET\
+                                    Commissions_and_Fees=Commission+Clearing_Fee+NFA_Fee+Platform+\
+                                    Globex_Fee+Transaction_Fee')
+                        conn.commit()
+                        print 'added phillip', f
+                        phillip_pdf.append(f)
+                    except:
+                        print 'didnt add phillip (mistake)', f
+                        phillip_pdf_mistake.append(f)
+                        logging.error('didnt add phillip (mistake)', exc_info=True)
+
     conn.close()
-    mistakes_list=gain_pdf_mistake+dorman_pdf_mistake
+    mistakes_list=gain_pdf_mistake+dorman_pdf_mistake+phillip_pdf_mistake
     show_mistakes='\n'.join(mistakes_list)
-    statements_list=gain_pdf+dorman_pdf
+    statements_list=gain_pdf+dorman_pdf+phillip_pdf
     show_statements='\n'.join(statements_list)
     msgBox = QMessageBox()
     msgBox.setWindowTitle('ESPA')

@@ -16,16 +16,18 @@ def states_from_folder():
     from pdfminer.converter import  TextConverter # , XMLConverter, HTMLConverter
     from PyQt4 import QtGui
     from PyQt4.QtGui import QMessageBox
-    __version__ = "0.1.3"
+    __version__ = "0.2.0"
     try:
         s=shelve.open('config.db','r')
         source_path=s['select_folder']
         get_from_subfolder_item=s['get_from_subfolder']
+
         showmelog=[]
         gainpath=os.path.join('Statements','Gain')
         dormanpath=os.path.join('Statements','Dorman')
-        admispath=os.path.join('Statements','Admis')
-        list_path=(gainpath, dormanpath, admispath)
+        phillippath=os.path.join('Statements','Phillip')
+        #admispath=os.path.join('Statements','Admis')
+        list_path=(gainpath, dormanpath, phillippath)
         #for onepath in list_path:
         for root, dirs, files in os.walk(source_path):
             for pdffile in files:
@@ -50,8 +52,8 @@ def states_from_folder():
                         interpreter.process_page(page)
                         data =  retstr.getvalue()
                         
-                    brokers=['DORMAN TRADING','GAIN CAPITAL',
-                             'Daily Customer Account Status']#the last one is for admis
+                    brokers=['DORMAN TRADING','GAIN CAPITAL', 'Daily Activity Statement']#, 3rd for phillip
+                            # 'Daily Customer Account Status']#the last one is for admis
                     for broker in brokers:
                         match=re.search(broker, data)
                         if match:
@@ -84,24 +86,47 @@ def states_from_folder():
                                 else:
                                     showmelog.append(pdf_name)
                                     shutil.copy(filepath, gain_f_path)
-                            elif broker == 'Daily Customer Account Status':
-                                get_date = re.findall('Business Date = (.+[0-9])', data)
-                                date_object = datetime.strptime(get_date[0], '%Y-%m-%d')
-                                print date_object
+                                    
+                            elif broker == 'Daily Activity Statement':
+                                get_date = re.findall('Date (.*[0-9])', data)
+                                get_date = get_date[0]
+                                get_date = re.findall('\s(.*[0-9])', get_date)
+                                date_object = datetime.strptime(get_date[0], '%m/%d/%Y')
                                 date_for_pdf_name = date_object.strftime('%Y-%m-%d')
-                                11111
-                                get_acc = re.findall('Report For - (.+[0-9])', data)
-                                acc = get_acc[0]
-                                pdf_name = date_for_pdf_name+'-'+acc+'.pdf'
+                                get_acc = re.findall('Account (.*[0-9])', data)
+                                get_acc = get_acc[0]
+                                acc = re.findall('\s(.*[0-9])', get_acc)
+                                acc=acc[0]
+                                pdf_name = date_for_pdf_name+'_'+acc+'.pdf'
                                 print pdf_name
-                                admis_f_path=os.path.join('Statements','Admis',pdf_name)
-                                if not os.path.exists(admispath):
-                                    os.makedirs(admispath)
-                                if os.path.exists(admis_f_path):
+                                phillip_f_path=os.path.join('Statements','Phillip',pdf_name)
+                                print phillip_f_path
+                                if not os.path.exists(phillippath):
+                                    os.makedirs(phillippath)
+                                if os.path.exists(phillip_f_path):
                                     continue
                                 else:
                                     showmelog.append(pdf_name)
-                                    shutil.copy(filepath, admis_f_path)
+                                    shutil.copy(filepath, phillip_f_path)
+
+#                            elif broker == 'Daily Customer Account Status':
+#                                get_date = re.findall('Business Date = (.+[0-9])', data)
+#                                date_object = datetime.strptime(get_date[0], '%Y-%m-%d')
+#                                print date_object
+#                                date_for_pdf_name = date_object.strftime('%Y-%m-%d')
+#                                11111
+#                                get_acc = re.findall('Report For - (.+[0-9])', data)
+#                                acc = get_acc[0]
+#                                pdf_name = date_for_pdf_name+'-'+acc+'.pdf'
+#                                print pdf_name
+#                                admis_f_path=os.path.join('Statements','Admis',pdf_name)
+#                                if not os.path.exists(admispath):
+#                                    os.makedirs(admispath)
+#                                if os.path.exists(admis_f_path):
+#                                    continue
+#                                else:
+#                                    showmelog.append(pdf_name)
+ #                                   shutil.copy(filepath, admis_f_path)
                             break
             if get_from_subfolder_item==True:
                 pass
