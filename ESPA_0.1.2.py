@@ -541,13 +541,15 @@ class MySettings(QtGui.QDialog):
         self.setLayout(total_layout)
         self.setFixedSize(500, 200)
         self.check_group = QtGui.QButtonGroup()
+        
         self.check_group.addButton(self.download_d,0)
-        self.check_group.addButton(self.download_g,1)
-        self.check_group.addButton(self.download_p,2)
-        self.check_group.addButton(self.show_d,3)
-        self.check_group.addButton(self.show_g,4)
+        self.check_group.addButton(self.show_d,1)
+        self.check_group.addButton(self.download_g,2)
+        self.check_group.addButton(self.show_g,3)
+        self.check_group.addButton(self.download_p,4)
         self.check_group.addButton(self.show_p,5)
         self.check_group.setExclusive(False)
+
 
 #check_list=dict.fromkeys(['download_d','show_d','download_g',
         #'show_g','download_p','show_p'])
@@ -631,6 +633,7 @@ class MySettings(QtGui.QDialog):
 
     def settings_dict(self, button):
         self.check_dict[self.check_group.id((button))]=button.isChecked()
+        print self.check_dict
 
     def save_login_pwd(self):
         #access the QlineEdit and use text() to access its text

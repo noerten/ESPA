@@ -8,10 +8,12 @@ def download_attach_gain():
     from PyQt4.QtGui import QMessageBox
     __version__ = "0.5"
     try:
+        #check_list=dict.fromkeys(['download_d','show_d','download_g',
+        #'show_g','download_p','show_p'])
         s=shelve.open('config.db', flag="r")
         mail_dict=s['mails']
         check_dict=s['checkboxes']
-        if check_dict[0]==False and check_dict[1]==False:
+        if check_dict[0]==False and check_dict[2]==False and check_dict[4]==False:
             sys.exit()
         user=mail_dict['mail1']
         pwd=keyring.get_password('ESPA_email', user)
@@ -28,7 +30,7 @@ def download_attach_gain():
         dormanpath=os.path.join('Statements','Dorman')
         list_path=(gainpath, dormanpath)
         for onepath in list_path:
-            if onepath==gainpath and check_dict[1]==False:
+            if onepath==gainpath and check_dict[2]==False:
                 continue
             if onepath==dormanpath and check_dict[0]==False:
                 continue
