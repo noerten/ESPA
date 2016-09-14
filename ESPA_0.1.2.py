@@ -549,41 +549,47 @@ class MySettings(QtGui.QDialog):
         self.check_group.addButton(self.show_p,5)
         self.check_group.setExclusive(False)
 
-#check_list=dict.fromkeys(['download_d','download_g','download_p',
-        #'show_d','show_g','show_p'])
+#check_list=dict.fromkeys(['download_d','show_d','download_g',
+        #'show_g','download_p','show_p'])
+
         try:
             s=shelve.open('config.db', flag="r")
             print 'opened'
             try:
                 self.check_dict=s['checkboxes']
+                
                 if self.check_dict[0]==True:
-                    print '0'
+                    print '0 download_d'
                     self.download_d.setCheckState(Qt.Checked)
                 else:
-                    self.download_d.setCheckState(Qt.Unchecked)                    
+                    self.download_d.setCheckState(Qt.Unchecked)
+                    
                 if self.check_dict[1]==True:
-                    print '1'
+                    print '1 show_d'
+                    self.show_d.setCheckState(Qt.Checked)
+                else:
+                    self.show_d.setCheckState(Qt.Unchecked)
+                    
+                if self.check_dict[2]==True:
+                    print '2 download_g'
                     self.download_g.setCheckState(Qt.Checked)
                 else:
                     self.download_g.setCheckState(Qt.Unchecked)
-                if self.check_dict[2]==True:
-                    print '2'
+                    
+                if self.check_dict[3]==True:
+                    print '3 show_g'
+                    self.show_g.setCheckState(Qt.Checked)
+                else:
+                    self.show_g.setCheckState(Qt.Unchecked)
+                    
+                if self.check_dict[4]==True:
+                    print '4 download_p'
                     self.download_p.setCheckState(Qt.Checked)
                 else:
                     self.download_p.setCheckState(Qt.Unchecked)
                     
-                if self.check_dict[3]==True:
-                    print '3'
-                    self.show_d.setCheckState(Qt.Checked)
-                else:
-                    self.show_d.setCheckState(Qt.Unchecked)
-                if self.check_dict[4]==True:
-                    print '4'
-                    self.show_g.setCheckState(Qt.Checked)
-                else:
-                    self.show_g.setCheckState(Qt.Unchecked)
                 if self.check_dict[5]==True:
-                    print '5'
+                    print '5 show_p'
                     self.show_p.setCheckState(Qt.Checked)
                 else:
                     self.show_p.setCheckState(Qt.Unchecked)
@@ -624,7 +630,6 @@ class MySettings(QtGui.QDialog):
         self.check_group.buttonClicked[QtGui.QAbstractButton].connect(self.settings_dict)
 
     def settings_dict(self, button):
-#check_list=dict.fromkeys(['download_d','download_g','download_p','show_d','show_g','show_p'])
         self.check_dict[self.check_group.id((button))]=button.isChecked()
 
     def save_login_pwd(self):

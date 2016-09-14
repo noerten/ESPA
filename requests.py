@@ -20,6 +20,9 @@ def res_distr():
     try:
         s=shelve.open('config.db', flag="r")
         check_dict=s['checkboxes']
+        #check_list=dict.fromkeys(['download_d','show_d','download_g',
+        #'show_g','download_p','show_p'])
+
     except:
         err_shelve = QMessageBox.warning(None, ("ESPA"),
                                        ('''Nothing was set to show, go to "Settings"'''))
@@ -30,7 +33,6 @@ def res_distr():
         delta_list2=list()
         conn=sqlite3.connect('stat.sqlite3')
         cur=conn.cursor()
-        #check_list=dict.fromkeys(['download_d','download_g','show_d','show_g'])
         if check_dict[3]==True:
             cur.execute('SELECT Net_Liquidating_Value FROM acc_stats_gain')
             g=[]
@@ -39,15 +41,24 @@ def res_distr():
         else:
             g=[]
 
-        if check_dict[2]==True:
+        if check_dict[1]==True:
             cur.execute('SELECT Account_Value_At_Market FROM acc_stats_dorman')
             d=[]
             for row in cur:
                 d.append(row)
         else:
             d=[]
+
+        if check_dict[5]==True:
+            cur.execute('SELECT Net_Liquid_Value FROM acc_stats_phillip')
+            p=[]
+            for row in cur:
+                p.append(row)
+        else:
+            p=[]
+            
         conn.close()
-        merged_list=d+g
+        merged_list=d+g+p
         for row in merged_list:
             delta_list.append(row)
         count=0
@@ -81,19 +92,19 @@ def res_distr():
 #res_distr()
 
 def get_date_value(value):
-    
+    #dorman gain phillip
     if value=='equity' or value=='equity w/o transfers':
-        request=['Account_Value_At_Market','Net_Liquidating_Value']
+        request=['Account_Value_At_Market','Net_Liquidating_Value', 'Net_Liquid_Value']
     if value=='balance':
-        request=['Ending_Balance','New_Cash_Balance']
+        request=['Ending_Balance','New_Cash_Balance', 'Ending_Balance']
     if value=='realized_pl':
-        request=['Net_Profit_Loss_From_Trades','Realized_Profit_Loss']
+        request=['Net_Profit_Loss_From_Trades','Realized_Profit_Loss', 'Realised_PL']
     if value=='cum_realized_pl':
-        request=['Net_Profit_Loss_From_Trades','Realized_Profit_Loss']
+        request=['Net_Profit_Loss_From_Trades','Realized_Profit_Loss', 'Realised_PL']
     if value=='init_margin':
-        request=['Initial_Margin_Requirment','Initial_Margin']
+        request=['Initial_Margin_Requirment','Initial_Margin', 'Initial_Margin']
     if value=='cum_comm_fees':
-        request=['Commissions_and_Fees','Commissions_and_Fees']
+        request=['Commissions_and_Fees','Commissions_and_Fees', 'Commissions_and_Fees']
     try:
         s=shelve.open('config.db', flag="r")
         check_dict=s['checkboxes']
@@ -101,10 +112,11 @@ def get_date_value(value):
         err_shelve = QMessageBox.warning(None, ("ESPA"),
                                    ("Nothing was set to show"))
     try:
-#check_list=dict.fromkeys(['download_d','download_g','show_d','show_g'])
+        #check_list=dict.fromkeys(['download_d','show_d','download_g',
+        #'show_g','download_p','show_p'])
         conn=sqlite3.connect('stat.sqlite3',detect_types=sqlite3.PARSE_DECLTYPES)
         cur=conn.cursor()
-        if check_dict[2]==True:
+        if check_dict[1]==True:
             cur.execute('SELECT Date, %s FROM acc_stats_dorman ORDER BY Date'
                         % (request[0]))
             d=cur.fetchall()
@@ -118,9 +130,18 @@ def get_date_value(value):
             g=dict(g)
         else:
             g={}
+        if check_dict[5]==True:
+            cur.execute('SELECT Date, %s FROM acc_stats_phillip ORDER BY Date'
+                        % (request[2]))
+            p=cur.fetchall()
+            p=dict(p)
+        else:
+            p={}
+
+            
         if value=='equity w/o transfers' or value=='cum_comm_fees':
             if value=='equity w/o transfers':
-                if check_dict[2]==True:
+                if check_dict[1]==True:
                     cur.execute('''SELECT Date, Cash_Amounts FROM acc_stats_dorman\
                                 WHERE Cash_in_out IS NOT 'nothing' ORDER BY Date''')
                     d_cash=cur.fetchall()
@@ -135,8 +156,15 @@ def get_date_value(value):
                     g_cash=dict(g_cash)
                 else:
                     g_cash={}
+                if check_dict[5]==True:
+                    p_cash={}
+                else:
+                    p_cash={}
+
+
+                    
             if value=='cum_comm_fees':
-                if check_dict[2]==True:
+                if check_dict[1]==True:
                     cur.execute('''SELECT Date, Cash_Amounts FROM acc_stats_dorman\
                                 WHERE Cash_in_out IS 'nothing' ORDER BY Date''')
                     d_cash=cur.fetchall()
@@ -150,6 +178,14 @@ def get_date_value(value):
                     g_cash=dict(g_cash)
                 else:
                     g_cash={}
+                    
+                if check_dict[5]==True:
+                    p_cash={}
+                else:
+                    p_cash={}
+
+
+                    
     #####################
             temp_cash_d_list_value=[]
             cash_d_list_value=[]
@@ -178,14 +214,14 @@ def get_date_value(value):
         list_date=[]
         list_value=[]
         if value=='equity w/o transfers':
-            full_dict={k:d.get(k,0)+g.get(k,0)-dict_cash.get(k,0)
-                       for k in set(d) | set(g)}
+            full_dict={k:d.get(k,0)+g.get(k,0)+p.get(k,0)-dict_cash.get(k,0)
+                       for k in set(d) | set(g) | set(p)}
         elif value=='cum_comm_fees':
-            full_dict={k:d.get(k,0)+g.get(k,0)+dict_cash.get(k,0)
-                       for k in set(d) | set(g)}        
+            full_dict={k:d.get(k,0)+g.get(k,0)+p.get(k,0)+dict_cash.get(k,0)
+                       for k in set(d) | set(g) | set(p)}        
         else:
-            full_dict= {k: d.get(k, 0) + g.get(k, 0) for k in set(d) | set(g)}    
-        for	k in sorted(full_dict):
+            full_dict= {k: d.get(k, 0) + g.get(k, 0) + p.get(k,0) for k in set(d) | set(g) | set(p)}    
+        for k in sorted(full_dict):
             list_date.append(k)
             list_value.append(full_dict[k])
         if value=='cum_realized_pl' or value=='cum_comm_fees':
