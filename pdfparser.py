@@ -53,8 +53,8 @@ def import_stats():
         datalist=list()
         ##########################
         #dev
-        if onepath==gainpath: continue
-        if onepath==dormanpath: continue
+        #if onepath==gainpath: continue
+        #if onepath==dormanpath: continue
         ##########################
         try:
             conn= sqlite3.connect('stat.sqlite3')
@@ -110,8 +110,8 @@ def import_stats():
                     Beginning_Balance REAL, Adjustments REAL, Commission REAL,\
                     Clearing_Fee REAL, Globex_Fee REAL, NFA_Fee REAL, Platform REAL,\
                     Transaction_Fee REAL, US4_Swap_Val REAL, Realised_PL REAL,\
-                    Option_Premium REAL, Ending_Balance REAL, Forward Value REAL,\
-                    Open_Trade_Equity REAL, Open US4_Swap_Val REAL, Equity_Balance REAL,\
+                    Option_Premium REAL, Ending_Balance REAL, Forward_Value REAL,\
+                    Open_Trade_Equity REAL, Open_US4_Swap_Val REAL, Equity_Balance REAL,\
                     Long_Option_Value REAL, Short_Option_Value REAL,\
                     Net_Option_Value REAL, Net_Liquid_Value REAL, Collateral REAL,\
                     Equity_Collateral REAL, Initial_Margin REAL, Maint_Margin REAL,\
@@ -338,14 +338,12 @@ def import_stats():
 #####################################
                 elif onepath==phillippath:
                     try:
-                        cur.execute('INSERT INTO acc_stats_phillip (Date) VALUE (?)', one_row[0])
-                        print '000'
                         cur.execute('INSERT INTO acc_stats_phillip (Date,\
                                     Beginning_Balance, Adjustments, Commission,\
                                     Clearing_Fee, Globex_Fee, NFA_Fee, Platform,\
                                     Transaction_Fee, US4_Swap_Val, Realised_PL,\
-                                    Option_Premium, Ending_Balance, Forward Value,\
-                                    Open_Trade_Equity, Open US4_Swap_Val, Equity_Balance,\
+                                    Option_Premium, Ending_Balance, Forward_Value,\
+                                    Open_Trade_Equity, Open_US4_Swap_Val, Equity_Balance,\
                                     Long_Option_Value, Short_Option_Value,\
                                     Net_Option_Value, Net_Liquid_Value, Collateral,\
                                     Equity_Collateral, Initial_Margin, Maint_Margin,\
