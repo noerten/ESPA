@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import FileDialog
 import numpy as np
 import os
 import sys
@@ -7,7 +7,7 @@ import random
 import shelve
 import sqlite3
 
-import keyring
+###import keyring
 import matplotlib
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
@@ -603,8 +603,8 @@ class MySettings(QtGui.QDialog):
                 
                 self.mail_dict=s['mails']
                 self.acc_mail.setText(self.mail_dict['mail1'])
-                self.acc_pwd.setText(keyring.get_password('ESPA_email',
-                                                          self.mail_dict['mail1']))
+     ###           self.acc_pwd.setText(keyring.get_password('ESPA_email',
+     ###                                                     self.mail_dict['mail1']))
             except:
                 self.mail_dict=dict.fromkeys(['mail1'])
             try:
@@ -639,7 +639,7 @@ class MySettings(QtGui.QDialog):
         #access the QlineEdit and use text() to access its text
         self.mail1 =str(self.acc_mail.text())
         self.pwd1 =str(self.acc_pwd.text())
-        keyring.set_password('ESPA_email', self.mail1, self.pwd1)
+    ###    keyring.set_password('ESPA_email', self.mail1, self.pwd1)
 
     def ok_settings(self):
         s=shelve.open('config.db')
